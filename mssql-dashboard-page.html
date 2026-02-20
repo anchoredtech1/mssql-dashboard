@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MSSQL Dashboard – Free Download | Anchored Tech Solutions</title>
+<meta name="description" content="Free open-source SQL Server monitoring dashboard. Monitor CPU, memory, Availability Groups, FCI clusters, and Log Shipping from your own machine. No cloud. No subscription."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy:    #0a0f1e;
+    --navy2:   #0d1428;
+    --navy3:   #111b35;
+    --blue:    #1a6cf5;
+    --blue2:   #2d7fff;
+    --cyan:    #00d4ff;
+    --green:   #00e5a0;
+    --red:     #ff4757;
+    --yellow:  #ffd32a;
+    --white:   #f0f4ff;
+    --muted:   #7a8aac;
+    --border:  rgba(255,255,255,0.08);
+    --card-bg: rgba(255,255,255,0.04);
+    --glow:    0 0 40px rgba(26,108,245,0.25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID NOISE BACKGROUND ─────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(26,108,245,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,108,245,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ───────────────────────────────────────────────── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,15,30,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 clamp(1rem, 5vw, 4rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .nav-logo img {
+    height: 36px;
+    width: auto;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta {
+    background: var(--blue);
+    color: #fff !important;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600 !important;
+    transition: background 0.2s !important;
+  }
+  .nav-cta:hover { background: var(--blue2) !important; color: #fff !important; }
+
+  /* ── WRAPPER ───────────────────────────────────────────── */
+  .page { position: relative; z-index: 1; }
+
+  /* ── HERO ──────────────────────────────────────────────── */
+  .hero {
+    padding: clamp(4rem, 10vw, 8rem) clamp(1rem, 5vw, 4rem) clamp(3rem, 8vw, 6rem);
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.25);
+    color: var(--cyan);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-desc {
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .badge {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .badge.green { color: var(--green); border-color: rgba(0,229,160,0.2); background: rgba(0,229,160,0.06); }
+  .badge.cyan  { color: var(--cyan);  border-color: rgba(0,212,255,0.2); background: rgba(0,212,255,0.06); }
+  .badge.blue  { color: var(--blue2); border-color: rgba(45,127,255,0.2); background: rgba(45,127,255,0.06); }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(26,108,245,0.4);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(26,108,245,0.5);
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.06);
+    color: var(--white);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  /* ── HERO DASHBOARD PREVIEW ────────────────────────────── */
+  .hero-visual {
+    animation: fadeLeft 0.8s 0.3s ease both;
+  }
+  .dashboard-preview {
+    background: var(--navy3);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  .preview-bar {
+    background: var(--navy2);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .preview-dot.r { background: var(--red); }
+  .preview-dot.y { background: var(--yellow); }
+  .preview-dot.g { background: var(--green); }
+  .preview-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-left: 8px;
+  }
+  .preview-body { padding: 16px; }
+
+  /* Mini stat cards inside preview */
+  .mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .mini-stat {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .mini-stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .mini-stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .mini-stat-value.ok     { color: var(--green); }
+  .mini-stat-value.warn   { color: var(--yellow); }
+  .mini-stat-value.info   { color: var(--cyan); }
+
+  /* Mini bar charts */
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 40px;
+    margin-top: 4px;
+  }
+  .mini-bar {
+    flex: 1;
+    background: rgba(26,108,245,0.4);
+    border-radius: 2px 2px 0 0;
+    animation: barGrow 1s ease both;
+  }
+
+  /* AG Status rows */
+  .ag-rows { margin-top: 12px; }
+  .ag-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 0.72rem;
+  }
+  .ag-name { font-family: 'DM Mono', monospace; color: var(--white); font-weight: 500; }
+  .ag-role { color: var(--muted); }
+  .ag-sync {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+  }
+  .ag-sync.sync { background: rgba(0,229,160,0.15); color: var(--green); }
+  .ag-sync.warn { background: rgba(255,215,42,0.15); color: var(--yellow); }
+
+  /* ── STATS STRIP ───────────────────────────────────────── */
+  .stats-strip {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    padding: 2rem clamp(1rem, 5vw, 4rem);
+    display: flex;
+    justify-content: center;
+    gap: clamp(2rem, 8vw, 6rem);
+    flex-wrap: wrap;
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--white);
+    background: linear-gradient(135deg, var(--white) 0%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+  /* ── SECTION COMMON ────────────────────────────────────── */
+  section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: clamp(3rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem);
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+  .section-desc { color: var(--muted); font-size: 1.05rem; max-width: 640px; margin-bottom: 3rem; }
+
+  /* ── FEATURES GRID ─────────────────────────────────────── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .feature-card {
+    background: var(--navy2);
+    padding: 2rem;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .feature-card:hover { background: var(--navy3); }
+  .feature-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  .feature-icon.blue   { background: rgba(26,108,245,0.15); }
+  .feature-icon.cyan   { background: rgba(0,212,255,0.12); }
+  .feature-icon.green  { background: rgba(0,229,160,0.12); }
+  .feature-icon.yellow { background: rgba(255,211,42,0.12); }
+  .feature-icon.red    { background: rgba(255,71,87,0.12); }
+  .feature-icon.purple { background: rgba(161,88,255,0.12); }
+  .feature-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .feature-card p { color: var(--muted); font-size: 0.875rem; line-height: 1.65; }
+
+  /* ── REQUIREMENTS TABLE ────────────────────────────────── */
+  .req-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  thead tr {
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    padding: 14px 20px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    color: var(--white);
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .req-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .req-tag.required { background: rgba(255,71,87,0.15); color: var(--red); }
+  .req-tag.optional { background: rgba(0,229,160,0.12); color: var(--green); }
+  td a { color: var(--cyan); text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+
+  /* ── DOWNLOAD SECTION ──────────────────────────────────── */
+  .download-section {
+    background: linear-gradient(135deg, rgba(26,108,245,0.12) 0%, rgba(0,212,255,0.06) 100%);
+    border: 1px solid rgba(26,108,245,0.25);
+    border-radius: 20px;
+    padding: clamp(2rem, 6vw, 4rem);
+    margin: 0 clamp(1rem, 5vw, 4rem) clamp(3rem, 8vw, 6rem);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3rem;
+    align-items: center;
+  }
+  .download-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--blue2);
+    margin-bottom: 1rem;
+  }
+  .download-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+  }
+  .download-desc { color: var(--muted); margin-bottom: 1.5rem; }
+  .download-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .download-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .download-meta-item span.dot { color: var(--green); font-size: 1rem; }
+
+  .download-box {
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    text-align: center;
+    min-width: 240px;
+  }
+  .download-version {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--cyan);
+    margin-bottom: 0.5rem;
+  }
+  .download-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+  .download-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .dl-btn-win {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(26,108,245,0.35);
+  }
+  .dl-btn-win:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,108,245,0.5); }
+  .dl-btn-zip {
+    background: rgba(255,255,255,0.06);
+    color: var(--white);
+    border: 1px solid var(--border);
+  }
+  .dl-btn-zip:hover { background: rgba(255,255,255,0.1); }
+  .dl-note {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 10px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── INSTALL STEPS ─────────────────────────────────────── */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    counter-reset: steps;
+  }
+  .step-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    position: relative;
+    counter-increment: steps;
+    transition: border-color 0.2s;
+  }
+  .step-card:hover { border-color: rgba(26,108,245,0.3); }
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: rgba(26,108,245,0.15);
+    line-height: 1;
+    margin-bottom: 0.75rem;
+  }
+  .step-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .step-card p { color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
+  .step-code {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 10px;
+    color: var(--cyan);
+    display: block;
+  }
+
+  /* ── FAQ ───────────────────────────────────────────────── */
+  .faq-list { display: flex; flex-direction: column; gap: 1px; }
+  .faq-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .faq-q {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--white);
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: left;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    transition: color 0.2s;
+  }
+  .faq-q:hover { color: var(--cyan); }
+  .faq-arrow { font-size: 1.2rem; transition: transform 0.3s; flex-shrink: 0; }
+  .faq-a {
+    display: none;
+    padding: 0 1.5rem 1.25rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  .faq-a code {
+    font-family: 'DM Mono', monospace;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--cyan);
+    font-size: 0.85rem;
+  }
+  .faq-item.open .faq-a { display: block; }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+  /* ── CTA FOOTER ────────────────────────────────────────── */
+  .cta-footer {
+    background: var(--navy2);
+    border-top: 1px solid var(--border);
+    padding: clamp(3rem, 6vw, 5rem) clamp(1rem, 5vw, 4rem);
+    text-align: center;
+  }
+  .cta-footer h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-weight: 800;
+    margin-bottom: 1rem;
+  }
+  .cta-footer p { color: var(--muted); margin-bottom: 2rem; }
+  .cta-footer-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  /* ── FOOTER ────────────────────────────────────────────── */
+  footer {
+    background: var(--navy);
+    border-top: 1px solid var(--border);
+    padding: 2rem clamp(1rem, 5vw, 4rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--white); }
+
+  /* ── ANIMATIONS ────────────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeLeft {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+  @keyframes barGrow {
+    from { transform: scaleY(0); transform-origin: bottom; }
+    to   { transform: scaleY(1); transform-origin: bottom; }
+  }
+
+  /* ── RESPONSIVE ────────────────────────────────────────── */
+  @media (max-width: 860px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+    .hero-visual { order: -1; }
+    .download-section {
+      grid-template-columns: 1fr;
+    }
+    .download-box { min-width: unset; width: 100%; max-width: 340px; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────────────── -->
+<nav>
+  <a href="https://anchoredtechsolutions.com" class="nav-logo">
+    <img src="https://anchoredtechsolutions.com/wp-content/uploads/2025/08/Anchored_Tech_Solution_Logo-1.png" alt="Anchored Tech Solutions"/>
+  </a>
+  <ul class="nav-links">
+    <li><a href="https://anchoredtechsolutions.com/#services">Services</a></li>
+    <li><a href="https://anchoredtechsolutions.com/#contact">Contact</a></li>
+    <li><a href="#download" class="nav-cta">Download Free</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+<!-- ── HERO ─────────────────────────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;">
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Free &amp; Open Source Tool
+      </div>
+      <h1>Monitor Your<br/><span>SQL Servers</span><br/>Like a Pro</h1>
+      <p class="hero-desc">
+        A free, self-hosted MSSQL monitoring dashboard built by the DBAs at Anchored Tech Solutions.
+        Runs on your machine. No cloud, no subscription, no data leaving your network.
+      </p>
+      <div class="hero-badges">
+        <span class="badge cyan">Python + FastAPI</span>
+        <span class="badge green">Free Forever</span>
+        <span class="badge blue">Local / Intranet</span>
+        <span class="badge">Windows + Linux</span>
+        <span class="badge">SQL · Windows · TLS Auth</span>
+      </div>
+      <div class="hero-actions">
+        <a href="#download" class="btn btn-primary">
+          ⬇ Download Free
+        </a>
+        <a href="https://github.com/anchoredtechsolutions/mssql-dashboard" class="btn btn-secondary" target="_blank" rel="noopener">
+          ⭐ View on GitHub
+        </a>
+      </div>
+    </div>
+
+    <!-- Mini dashboard preview -->
+    <div class="hero-visual">
+      <div class="dashboard-preview">
+        <div class="preview-bar">
+          <div class="preview-dot r"></div>
+          <div class="preview-dot y"></div>
+          <div class="preview-dot g"></div>
+          <span class="preview-title">MSSQL Dashboard — localhost:8080</span>
+        </div>
+        <div class="preview-body">
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="mini-stat-label">CPU</div>
+              <div class="mini-stat-value ok">23%</div>
+              <div class="mini-chart">
+                <div class="mini-bar" style="height:30%;animation-delay:0.0s"></div>
+                <div class="mini-bar" style="height:45%;animation-delay:0.05s"></div>
+                <div class="mini-bar" style="height:20%;animation-delay:0.1s"></div>
+                <div class="mini-bar" style="height:60%;animation-delay:0.15s"></div>
+                <div class="mini-bar" style="height:35%;animation-delay:0.2s"></div>
+                <div class="mini-bar" style="height:55%;animation-delay:0.25s"></div>
+                <div class="mini-bar" style="height:23%;animation-delay:0.3s"></div>
+              </div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-label">Memory</div>
+              <div class="mini-stat-value info">14.2 GB</div>
+              <div class="mini-chart">
+                <div class="mini-bar" style="height:70%;background:rgba(0,212,255,0.4);animation-delay:0.05s"></div>
+                <div class="mini-bar" style="height:72%;background:rgba(0,212,255,0.4);animation-delay:0.1s"></div>
+                <div class="mini-bar" style="height:68%;background:rgba(0,212,255,0.4);animation-delay:0.15s"></div>
+                <div class="mini-bar" style="height:75%;background:rgba(0,212,255,0.4);animation-delay:0.2s"></div>
+                <div class="mini-bar" style="height:71%;background:rgba(0,212,255,0.4);animation-delay:0.25s"></div>
+                <div class="mini-bar" style="height:73%;background:rgba(0,212,255,0.4);animation-delay:0.3s"></div>
+                <div class="mini-bar" style="height:71%;background:rgba(0,212,255,0.4);animation-delay:0.35s"></div>
+              </div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-label">Blocked</div>
+              <div class="mini-stat-value ok">0</div>
+              <div class="mini-chart">
+                <div class="mini-bar" style="height:5%;background:rgba(0,229,160,0.4);animation-delay:0.0s"></div>
+                <div class="mini-bar" style="height:5%;background:rgba(0,229,160,0.4);animation-delay:0.05s"></div>
+                <div class="mini-bar" style="height:20%;background:rgba(255,71,87,0.4);animation-delay:0.1s"></div>
+                <div class="mini-bar" style="height:5%;background:rgba(0,229,160,0.4);animation-delay:0.15s"></div>
+                <div class="mini-bar" style="height:5%;background:rgba(0,229,160,0.4);animation-delay:0.2s"></div>
+                <div class="mini-bar" style="height:5%;background:rgba(0,229,160,0.4);animation-delay:0.25s"></div>
+                <div class="mini-bar" style="height:5%;background:rgba(0,229,160,0.4);animation-delay:0.3s"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ag-rows">
+            <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Availability Groups</div>
+            <div class="ag-row">
+              <span class="ag-name">AG-PROD-01</span>
+              <span class="ag-role">PRIMARY → SQL-NODE-1</span>
+              <span class="ag-sync sync">SYNCHRONIZED</span>
+            </div>
+            <div class="ag-row">
+              <span class="ag-name">AG-PROD-01</span>
+              <span class="ag-role">SECONDARY → SQL-NODE-2</span>
+              <span class="ag-sync sync">SYNCHRONIZED</span>
+            </div>
+            <div class="ag-row">
+              <span class="ag-name">AG-DR-02</span>
+              <span class="ag-role">SECONDARY → SQL-DR-1</span>
+              <span class="ag-sync warn">SYNCHRONIZING</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STATS STRIP ───────────────────────────────────────────────────── -->
+<div class="stats-strip">
+  <div class="stat-item">
+    <div class="stat-num">3</div>
+    <div class="stat-label">Auth Methods</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">100%</div>
+    <div class="stat-label">Free Forever</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">0</div>
+    <div class="stat-label">Cloud Required</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">5 min</div>
+    <div class="stat-label">To Install</div>
+  </div>
+</div>
+
+<!-- ── FEATURES ──────────────────────────────────────────────────────── -->
+<section>
+  <div class="section-label">What It Monitors</div>
+  <h2 class="section-title">Everything Your SQL<br/>Environment Needs</h2>
+  <p class="section-desc">Built by DBAs for DBAs. Covers all the critical monitoring points for production SQL Server environments.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon blue">💻</div>
+      <h3>Server Health</h3>
+      <p>Real-time CPU usage, buffer pool memory, SQL Server edition &amp; version, service uptime, and database list with states.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon red">🔒</div>
+      <h3>Blocked Sessions</h3>
+      <p>Instantly see blocked sessions with the full blocking chain — who is waiting, on what, for how long, and the exact SQL being executed.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon cyan">⚡</div>
+      <h3>Wait Stats</h3>
+      <p>Top 10 wait types filtered for noise. Identify bottlenecks in CPU, I/O, locks, network, and memory at a glance.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon green">🔄</div>
+      <h3>Availability Groups</h3>
+      <p>AG replica roles, synchronization state, redo queue size (KB), send rate, lag in seconds, and failover mode — per database.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon yellow">🖥️</div>
+      <h3>FCI Clusters</h3>
+      <p>Current active node, all cluster nodes and status, shared disk group health, and cluster quorum properties.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon purple" style="background:rgba(161,88,255,0.12);">📦</div>
+      <h3>Log Shipping</h3>
+      <p>Primary, secondary, and monitor role tracking. Last backup/copy/restore times with automatic threshold violation detection.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon blue">🔔</div>
+      <h3>Alert Rules</h3>
+      <p>Define your own thresholds — CPU %, blocked sessions, lag minutes, etc. Alerts stored locally with acknowledge workflow.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon cyan">🔐</div>
+      <h3>All 3 Auth Types</h3>
+      <p>SQL Server Auth, Windows/Integrated Auth, and TLS/Certificate Auth for encrypted servers — including AWS RDS with custom CA certs.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon green">🗃️</div>
+      <h3>Metric History</h3>
+      <p>7-day rolling metric snapshots stored in local SQLite. View CPU &amp; memory trends over time for any registered server.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── REQUIREMENTS ───────────────────────────────────────────────────── -->
+<section>
+  <div class="section-label">Prerequisites</div>
+  <h2 class="section-title">What You Need<br/>to Install</h2>
+  <p class="section-desc">Lightweight requirements — runs on any Windows or Linux machine on your intranet.</p>
+
+  <div class="req-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Requirement</th>
+          <th>Version</th>
+          <th>Status</th>
+          <th>Download</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Python</strong></td>
+          <td>3.11 or newer</td>
+          <td><span class="req-tag required">Required</span></td>
+          <td><a href="https://python.org" target="_blank">python.org ↗</a></td>
+        </tr>
+        <tr>
+          <td><strong>ODBC Driver for SQL Server</strong></td>
+          <td>17 or 18</td>
+          <td><span class="req-tag required">Required</span></td>
+          <td><a href="https://aka.ms/odbc18" target="_blank">aka.ms/odbc18 ↗</a></td>
+        </tr>
+        <tr>
+          <td><strong>Visual C++ Redistributable</strong></td>
+          <td>2019+</td>
+          <td><span class="req-tag required">Required (Windows)</span></td>
+          <td><a href="https://aka.ms/vs/17/release/vc_redist.x64.exe" target="_blank">Download ↗</a></td>
+        </tr>
+        <tr>
+          <td><strong>TLS Certificate</strong></td>
+          <td>.cer / .pem</td>
+          <td><span class="req-tag optional">Only for Encrypted Servers</span></td>
+          <td>From your DBA / AWS RDS console</td>
+        </tr>
+        <tr>
+          <td><strong>SQL Server login</strong> with VIEW SERVER STATE</td>
+          <td>—</td>
+          <td><span class="req-tag required">Required</span></td>
+          <td>Grant in SSMS</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── HOW TO INSTALL ─────────────────────────────────────────────────── -->
+<section>
+  <div class="section-label">Installation</div>
+  <h2 class="section-title">Up and Running<br/>in 5 Minutes</h2>
+  <p class="section-desc">Download, run one file, open your browser. No Docker, no cloud accounts, no configuration files to hand-edit.</p>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <h3>Download</h3>
+      <p>Download the ZIP file below and extract it anywhere on your machine — a folder on your desktop works fine.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <h3>Install Prerequisites</h3>
+      <p>Make sure Python 3.11+ and the Microsoft ODBC Driver 18 are installed. Links are in the table above.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <h3>Run the Installer</h3>
+      <p>Double-click <code>install.bat</code> on Windows, or run the shell script on Linux. It installs Python packages and starts the server automatically.</p>
+      <code class="step-code">install.bat</code>
+    </div>
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <h3>Open Dashboard</h3>
+      <p>Your browser opens automatically to <code>localhost:8080</code>. Use the <strong>Add Server</strong> button to register your first SQL Server instance.</p>
+      <code class="step-code">http://localhost:8080</code>
+    </div>
+    <div class="step-card">
+      <div class="step-num">05</div>
+      <h3>Add Your Servers</h3>
+      <p>Enter the hostname or VNN listener name, select your auth type (SQL, Windows, or TLS/Cert), and click <strong>Test Connection</strong>.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">06</div>
+      <h3>You're Live</h3>
+      <p>The dashboard starts polling your servers immediately. Health metrics, AG status, FCI nodes, and log shipping lag — all on one screen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── DOWNLOAD BOX ────────────────────────────────────────────────────── -->
+<div class="download-section" id="download">
+  <div>
+    <div class="download-label">⬇ Free Download</div>
+    <h2 class="download-title">MSSQL Dashboard<br/>v1.0.0</h2>
+    <p class="download-desc">
+      Full source code included. No license keys, no usage limits, no call-home telemetry.
+      Your data stays on your network.
+    </p>
+    <div class="download-meta">
+      <div class="download-meta-item"><span class="dot">●</span> Windows 10/11 + Server 2016+</div>
+      <div class="download-meta-item"><span class="dot">●</span> Ubuntu 20.04+ / RHEL 8+</div>
+      <div class="download-meta-item"><span class="dot">●</span> Python 3.11+ Required</div>
+      <div class="download-meta-item"><span class="dot">●</span> ODBC Driver 17 or 18 Required</div>
+    </div>
+  </div>
+  <div class="download-box">
+    <div class="download-version">v1.0.0 — Phase 1 Backend</div>
+    <div class="download-name">mssql-dashboard</div>
+    <div class="download-btn">
+      <a href="https://github.com/anchoredtechsolutions/mssql-dashboard/releases/latest/download/mssql-dashboard-v1.0.0.zip" class="dl-btn dl-btn-win" download>
+        ⬇ Download ZIP
+      </a>
+      <a href="https://github.com/anchoredtechsolutions/mssql-dashboard" class="dl-btn dl-btn-zip" target="_blank" rel="noopener">
+        ⭐ View Source on GitHub
+      </a>
+    </div>
+    <div class="dl-note">Free forever · MIT License</div>
+  </div>
+</div>
+
+<!-- ── FAQ ────────────────────────────────────────────────────────────── -->
+<section>
+  <div class="section-label">FAQ</div>
+  <h2 class="section-title">Common Questions</h2>
+  <p class="section-desc">Everything you need to know before installing.</p>
+
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        Does this send any data to the cloud?
+        <span class="faq-arrow">▾</span>
+      </button>
+      <div class="faq-a">
+        No. 100% of data stays on your machine and network. The dashboard is a local FastAPI server
+        that connects directly to your SQL Server instances via ODBC. No telemetry, no analytics,
+        no call-home. Your credentials are encrypted at rest using Fernet encryption in a local SQLite file.
+      </div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        What SQL Server versions are supported?
+        <span class="faq-arrow">▾</span>
+      </button>
+      <div class="faq-a">
+        SQL Server 2012 and newer. Most queries use DMVs that have been available since 2008 R2,
+        but AG features require 2012+. Log shipping monitoring works on all editions that support it,
+        including Standard and Enterprise.
+      </div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        What permissions does the monitoring account need?
+        <span class="faq-arrow">▾</span>
+      </button>
+      <div class="faq-a">
+        The minimum required is <code>VIEW SERVER STATE</code> on the master database.
+        For log shipping monitoring you also need read access to <code>msdb.dbo.log_shipping_monitor_*</code> tables.
+        We recommend creating a dedicated read-only monitoring login — no sysadmin needed.
+      </div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        How do I connect to an encrypted server with a certificate (like AWS RDS)?
+        <span class="faq-arrow">▾</span>
+      </button>
+      <div class="faq-a">
+        Download the RDS CA certificate from the AWS console (a <code>.pem</code> file).
+        Drop it in a <code>certs/</code> folder inside the dashboard directory.
+        When adding the server, select <strong>TLS/Certificate</strong> auth type and paste the full path to the certificate.
+        The dashboard will pass it directly to the ODBC driver.
+      </div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        Can multiple people on my team use this at the same time?
+        <span class="faq-arrow">▾</span>
+      </button>
+      <div class="faq-a">
+        Yes. Run it on a shared machine on your intranet and share the URL
+        (e.g. <code>http://192.168.1.50:8080</code>). Anyone on the same network can open it in their browser.
+        Each person installs their own copy if they prefer a local setup.
+      </div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        Is this the complete dashboard or just a backend?
+        <span class="faq-arrow">▾</span>
+      </button>
+      <div class="faq-a">
+        Version 1.0.0 is the complete backend API with all monitoring queries, encryption,
+        and a Swagger UI at <code>/docs</code>. The full React frontend (graphical dashboard with charts,
+        topology views, and alert center) is in active development and will be released as v1.1.0.
+        Follow the GitHub repo or check back on this page for updates.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA FOOTER ──────────────────────────────────────────────────────── -->
+<div class="cta-footer">
+  <h2>Need Custom SQL Server Monitoring<br/>or Database Work?</h2>
+  <p>The team at Anchored Tech Solutions provides enterprise database administration,<br/>
+  custom monitoring solutions, and SQL Server consulting for businesses of all sizes.</p>
+  <div class="cta-footer-btns">
+    <a href="https://anchoredtechsolutions.com/#contact" class="btn btn-primary">Get In Touch →</a>
+    <a href="https://anchoredtechsolutions.com/#services" class="btn btn-secondary">View All Services</a>
+  </div>
+</div>
+
+<!-- ── FOOTER ────────────────────────────────────────────────────────── -->
+<footer>
+  <div>
+    <a href="https://anchoredtechsolutions.com">
+      <img src="https://anchoredtechsolutions.com/wp-content/uploads/2025/08/Anchored_Tech_Solution_Logo-1.png"
+           alt="Anchored Tech Solutions" style="height:28px;width:auto;opacity:0.7;"/>
+    </a>
+  </div>
+  <div>© 2025 Anchored Tech Solutions, LLC. MSSQL Dashboard is released under the MIT License.</div>
+  <div style="display:flex;gap:1.5rem;">
+    <a href="https://anchoredtechsolutions.com">Home</a>
+    <a href="https://github.com/anchoredtechsolutions/mssql-dashboard" target="_blank">GitHub</a>
+    <a href="https://anchoredtechsolutions.com/#contact">Contact</a>
+  </div>
+</footer>
+
+</div><!-- .page -->
+
+<script>
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    // Toggle clicked
+    if (!isOpen) item.classList.add('open');
+  }
+</script>
+
+</body>
+</html>

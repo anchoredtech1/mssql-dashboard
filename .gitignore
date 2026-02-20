@@ -1,0 +1,63 @@
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.eggs/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Secrets & Credentials (NEVER commit these) ───────────
+key.secret
+*.pem
+*.cer
+*.pfx
+*.p12
+certs/
+.env
+.env.*
+!.env.example
+
+# ── Database (local SQLite — not for version control) ────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── IDE ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Frontend build artifacts ──────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.next/
+frontend/build/
+
+# ── OS ───────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ── PyInstaller ───────────────────────────────────────────
+*.spec
+dist/

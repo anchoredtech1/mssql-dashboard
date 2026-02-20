@@ -1,0 +1,95 @@
+name: Release
+
+# Triggers when you push a tag like: v1.0.0, v1.1.0, etc.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the full repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Get the version number from the tag (e.g. v1.0.0 → 1.0.0)
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      # 3. Build the release ZIP
+      #    - Excludes: .git, __pycache__, .env, *.db, key.secret, certs/
+      #    - Names it: mssql-dashboard-v1.0.0.zip
+      - name: Build release ZIP
+        run: |
+          mkdir -p release_build
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='.env' \
+            --exclude='*.db' \
+            --exclude='*.sqlite' \
+            --exclude='key.secret' \
+            --exclude='certs/' \
+            --exclude='*.pem' \
+            --exclude='*.cer' \
+            --exclude='frontend/node_modules' \
+            --exclude='frontend/dist' \
+            --exclude='release_build' \
+            . release_build/mssql-dashboard/
+          
+          cd release_build
+          zip -r ../mssql-dashboard-v${{ steps.version.outputs.VERSION }}.zip mssql-dashboard/
+          cd ..
+          echo "ZIP created: mssql-dashboard-v${{ steps.version.outputs.VERSION }}.zip"
+          ls -lh mssql-dashboard-v${{ steps.version.outputs.VERSION }}.zip
+
+      # 4. Create the GitHub Release and upload the ZIP
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "MSSQL Dashboard v${{ steps.version.outputs.VERSION }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true    # Auto-generates changelog from commit messages
+          body: |
+            ## MSSQL Dashboard v${{ steps.version.outputs.VERSION }}
+
+            A free, self-hosted SQL Server monitoring dashboard.
+
+            ### Download & Install
+
+            **Windows:**
+            1. Download `mssql-dashboard-v${{ steps.version.outputs.VERSION }}.zip` below
+            2. Extract it anywhere on your machine
+            3. Double-click `install.bat`
+            4. Browser opens automatically to `http://localhost:8080`
+
+            **Linux / macOS:**
+            ```bash
+            unzip mssql-dashboard-v${{ steps.version.outputs.VERSION }}.zip
+            cd mssql-dashboard
+            chmod +x installer/install.sh
+            ./installer/install.sh
+            ```
+
+            ### Requirements
+            - Python 3.11+ → https://python.org
+            - ODBC Driver 17 or 18 → https://aka.ms/odbc18
+
+            ### Full Documentation
+            See the [README](https://github.com/anchoredtechsolutions/mssql-dashboard#readme) for complete setup instructions.
+
+            ---
+            Built by [Anchored Tech Solutions](https://anchoredtechsolutions.com)
+          files: |
+            mssql-dashboard-v${{ steps.version.outputs.VERSION }}.zip
