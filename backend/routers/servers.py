@@ -3,13 +3,15 @@ routers/servers.py
 CRUD endpoints for the monitored server registry.
 POST /servers        – register a new server
 GET  /servers        – list all servers
+POST /servers/import – bulk import from SSMS .regsrvr XML file
 GET  /servers/{id}   – get one server
 PUT  /servers/{id}   – update a server
 DELETE /servers/{id} – remove a server
 POST /servers/{id}/test – test connection
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import xml.etree.ElementTree as ET
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -108,6 +110,75 @@ def create_server(payload: ServerCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(server)
     return server
+
+
+@router.post("/import", status_code=status.HTTP_200_OK)
+async def import_servers(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Bulk imports servers from an SSMS .regsrvr XML file."""
+    content = await file.read()
+    try:
+        root = ET.fromstring(content)
+    except ET.ParseError:
+        raise HTTPException(status_code=400, detail="Invalid XML file format.")
+
+    imported_count = 0
+
+    # SSMS files contain namespaces, so we search by matching the end of the tag name
+    for elem in root.iter():
+        tag = elem.tag.split('}')[-1]  # Strip out the XML namespace
+        if tag == "RegisteredServer":
+            display_name = "Imported Server"
+            host = "localhost"
+            instance_name = None
+            port = 1433
+            auth_type = AuthType.windows
+            username = None
+
+            # Look through the properties of this specific server
+            for child in elem.iter():
+                ctag = child.tag.split('}')[-1]
+                if ctag == "Name" and child.text:
+                    display_name = child.text
+                elif ctag == "ServerName" and child.text:
+                    raw_host = child.text
+                    # Check for instance name (Host\Instance)
+                    if "\\" in raw_host:
+                        host, instance_name = raw_host.split("\\", 1)
+                    # Check for custom port (Host,1433)
+                    elif "," in raw_host:
+                        host, port_str = raw_host.split(",", 1)
+                        try:
+                            port = int(port_str)
+                        except ValueError:
+                            pass
+                    else:
+                        host = raw_host
+                elif ctag == "LoginSecure" and child.text:
+                    # 'false' or '0' means SQL Authentication
+                    if child.text.lower() in ['false', '0']:
+                        auth_type = AuthType.sql
+                elif ctag == "Login" and child.text:
+                    username = child.text
+
+            # Save to database
+            server = MonitoredServer(
+                display_name=display_name,
+                host=host,
+                port=port,
+                instance_name=instance_name,
+                auth_type=auth_type,
+                username=encrypt(username) if username else None,
+                encrypt=False,
+                trust_cert=True,
+                role=ServerRole.standalone,
+                poll_interval=60,
+                enabled=True
+            )
+            db.add(server)
+            imported_count += 1
+
+    db.commit()
+    return {"message": f"Successfully imported {imported_count} servers."}
 
 
 @router.get("/", response_model=list[ServerResponse])

@@ -36,6 +36,118 @@ const api = {
   deleteServer: (id) => fetch(`${API}/servers/${id}`, { method: "DELETE" }),
 };
 
+// ── NEW: IMPORT BUTTON COMPONENT ───────────────────────────────────────────────
+function ImportServerButton({ onImportSuccess, style }) {
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch(`${API}/servers/import`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to import servers');
+      }
+
+      const data = await response.json();
+      alert(data.message); 
+      
+      if (onImportSuccess) {
+        onImportSuccess();
+      }
+    } catch (error) {
+      console.error('Error importing file:', error);
+      alert('There was an error importing the file. Please check the format.');
+    } finally {
+      setIsUploading(false);
+      event.target.value = null; 
+    }
+  };
+
+  return (
+    <>
+      <button 
+        onClick={handleButtonClick} 
+        disabled={isUploading}
+        style={{
+          background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+          color: "#f0f4ff", borderRadius: 8, padding: "6px 14px", cursor: isUploading ? "wait" : "pointer",
+          fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 600, transition: "background 0.2s",
+          ...style
+        }}
+      >
+        {isUploading ? 'Importing...' : '📥 Import from SSMS'}
+      </button>
+
+      <input
+        type="file"
+        accept=".regsrvr,.xml"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+    </>
+  );
+}
+
+// ── WINDOW CONTROLS ───────────────────────────────────────────────────────────
+function WindowControls() {
+  const btnStyle = {
+    background: "transparent", border: "none", color: "#7a8aac",
+    width: 46, height: 52, display: "flex", alignItems: "center", justifyContent: "center",
+    cursor: "pointer", transition: "background 0.2s", WebkitAppRegion: "no-drag"
+  };
+
+  // Safely trigger the functions you exposed in preload.js
+  const handleMinimize = () => window.electronAPI?.minimize();
+  const handleMaximize = () => window.electronAPI?.maximize();
+  const handleClose = () => window.electronAPI?.close();
+
+  return (
+    <div style={{ display: "flex", WebkitAppRegion: "no-drag", marginLeft: 16 }}>
+      <button 
+        style={btnStyle} 
+        onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"} 
+        onMouseLeave={e => e.currentTarget.style.background="transparent"} 
+        onClick={handleMinimize}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect fill="currentColor" width="10" height="1" x="1" y="6"></rect></svg>
+      </button>
+      <button 
+        style={btnStyle} 
+        onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"} 
+        onMouseLeave={e => e.currentTarget.style.background="transparent"} 
+        onClick={handleMaximize}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12"><rect width="9" height="9" x="1.5" y="1.5" fill="none" stroke="currentColor"></rect></svg>
+      </button>
+      <button 
+        style={{...btnStyle, transition: "background 0.2s, color 0.2s"}} 
+        onMouseEnter={e => {e.currentTarget.style.background="#e81123"; e.currentTarget.style.color="#fff"}} 
+        onMouseLeave={e => {e.currentTarget.style.background="transparent"; e.currentTarget.style.color="#7a8aac"}} 
+        onClick={handleClose}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12"><polygon fill="currentColor" fillRule="evenodd" points="11 1.576 6.583 6 11 10.424 10.424 11 6 6.583 1.576 11 1 10.424 5.417 6 1 1.576 1.576 1 6 5.417 10.424 1"></polygon></svg>
+      </button>
+    </div>
+  );
+}
+
 // ── PULSE DOT ─────────────────────────────────────────────────────────────────
 function Pulse({ color = "#00e5a0", size = 8 }) {
   return (
@@ -729,9 +841,10 @@ export default function App() {
       <div style={{
         height:52, background:"rgba(13,20,40,0.95)", borderBottom:"1px solid rgba(255,255,255,0.07)",
         display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"0 20px", backdropFilter:"blur(20px)", flexShrink:0, zIndex:10
+        paddingLeft: 20, backdropFilter:"blur(20px)", flexShrink:0, zIndex:10,
+        WebkitAppRegion: "drag"
       }}>
-        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:14, WebkitAppRegion: "no-drag" }}>
           <button onClick={() => setSidebarOpen(o=>!o)} style={{ background:"none", border:"none", color:"#7a8aac", cursor:"pointer", fontSize:18, padding:2 }}>☰</button>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:18 }}>🗄️</span>
@@ -740,24 +853,28 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:10, color:"#7a8aac", display:"flex", alignItems:"center", gap:5 }}>
-            <Pulse color="#00e5a0" size={5}/>
-            {servers.filter(s=>s.enabled).length} servers monitored
+        <div style={{ display:"flex", alignItems:"center" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, WebkitAppRegion: "no-drag" }}>
+            <div style={{ fontFamily:"'DM Mono', monospace", fontSize:10, color:"#7a8aac", display:"flex", alignItems:"center", gap:5 }}>
+              <Pulse color="#00e5a0" size={5}/>
+              {servers.filter(s=>s.enabled).length} servers monitored
+            </div>
+            <button onClick={() => setShowAlerts(true)} style={{
+              background: unacked > 0 ? "rgba(255,71,87,0.15)" : "rgba(255,255,255,0.05)",
+              border: `1px solid ${unacked > 0 ? "rgba(255,71,87,0.3)" : "rgba(255,255,255,0.1)"}`,
+              color: unacked > 0 ? "#ff4757" : "#7a8aac", borderRadius:8, padding:"6px 12px",
+              cursor:"pointer", fontFamily:"'DM Mono', monospace", fontSize:11, display:"flex", alignItems:"center", gap:6
+            }}>
+              🔔 {unacked > 0 ? `${unacked} unacked` : "Alerts"}
+            </button>
+            <ImportServerButton onImportSuccess={loadServers} />
+            <button onClick={() => setShowAdd(true)} style={{
+              background:"linear-gradient(135deg, #1a6cf5, #2d7fff)", border:"none",
+              color:"#fff", borderRadius:8, padding:"6px 14px", cursor:"pointer",
+              fontFamily:"'DM Mono', monospace", fontSize:11, fontWeight:600
+            }}>+ Add Server</button>
           </div>
-          <button onClick={() => setShowAlerts(true)} style={{
-            background: unacked > 0 ? "rgba(255,71,87,0.15)" : "rgba(255,255,255,0.05)",
-            border: `1px solid ${unacked > 0 ? "rgba(255,71,87,0.3)" : "rgba(255,255,255,0.1)"}`,
-            color: unacked > 0 ? "#ff4757" : "#7a8aac", borderRadius:8, padding:"6px 12px",
-            cursor:"pointer", fontFamily:"'DM Mono', monospace", fontSize:11, display:"flex", alignItems:"center", gap:6
-          }}>
-            🔔 {unacked > 0 ? `${unacked} unacked` : "Alerts"}
-          </button>
-          <button onClick={() => setShowAdd(true)} style={{
-            background:"linear-gradient(135deg, #1a6cf5, #2d7fff)", border:"none",
-            color:"#fff", borderRadius:8, padding:"6px 14px", cursor:"pointer",
-            fontFamily:"'DM Mono', monospace", fontSize:11, fontWeight:600
-          }}>+ Add Server</button>
+          <WindowControls />
         </div>
       </div>
 
@@ -778,11 +895,14 @@ export default function App() {
                 <div style={{ textAlign:"center", padding:"40px 16px" }}>
                   <div style={{ fontSize:32, marginBottom:12 }}>🗄️</div>
                   <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#7a8aac", marginBottom:16 }}>No servers yet</div>
-                  <button onClick={() => setShowAdd(true)} style={{
-                    background:"linear-gradient(135deg, #1a6cf5, #2d7fff)", border:"none",
-                    color:"#fff", borderRadius:8, padding:"8px 16px", cursor:"pointer",
-                    fontFamily:"'DM Mono', monospace", fontSize:11, fontWeight:600
-                  }}>+ Add Your First Server</button>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <ImportServerButton onImportSuccess={loadServers} style={{ width: "100%", padding: "8px 16px" }} />
+                    <button onClick={() => setShowAdd(true)} style={{
+                      background:"linear-gradient(135deg, #1a6cf5, #2d7fff)", border:"none",
+                      color:"#fff", borderRadius:8, padding:"8px 16px", cursor:"pointer",
+                      fontFamily:"'DM Mono', monospace", fontSize:11, fontWeight:600, width: "100%"
+                    }}>+ Add Manually</button>
+                  </div>
                 </div>
               ) : (
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
@@ -803,12 +923,15 @@ export default function App() {
             <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", gap:16 }}>
               <div style={{ fontSize:64 }}>🗄️</div>
               <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:24 }}>MSSQL Dashboard</h2>
-              <p style={{ color:"#7a8aac", fontFamily:"'DM Mono', monospace", fontSize:12 }}>Add a server to start monitoring</p>
-              <button onClick={() => setShowAdd(true)} style={{
-                background:"linear-gradient(135deg, #1a6cf5, #2d7fff)", border:"none",
-                color:"#fff", borderRadius:10, padding:"12px 28px", cursor:"pointer",
-                fontFamily:"'DM Mono', monospace", fontSize:13, fontWeight:600
-              }}>+ Add Server</button>
+              <p style={{ color:"#7a8aac", fontFamily:"'DM Mono', monospace", fontSize:12 }}>Add servers to start monitoring</p>
+              <div style={{ display: "flex", gap: 12 }}>
+                <ImportServerButton onImportSuccess={loadServers} style={{ padding: "12px 28px", fontSize: 13 }} />
+                <button onClick={() => setShowAdd(true)} style={{
+                  background:"linear-gradient(135deg, #1a6cf5, #2d7fff)", border:"none",
+                  color:"#fff", borderRadius:10, padding:"12px 28px", cursor:"pointer",
+                  fontFamily:"'DM Mono', monospace", fontSize:13, fontWeight:600
+                }}>+ Add Manually</button>
+              </div>
             </div>
           )}
         </div>
