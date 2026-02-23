@@ -92,42 +92,62 @@ function waitForPort(port, retries = 40, delay = 500) {
 
 // ── START PYTHON BACKEND ──────────────────────────────────────────────────────
 async function startBackend() {
-  const portFree = await isPortFree(API_PORT);
+   // Kill any leftover backend process from a previous run
+  if (process.platform === 'win32') {
+    exec('taskkill /f /im mssql_backend.exe', () => {}); // ignore errors if not running
+    await new Promise(r => setTimeout(r, 500)); // give it a moment to die
+  }
+
+    const portFree = await isPortFree(API_PORT);
   if (!portFree) {
     log.info(`Port ${API_PORT} already in use — assuming backend is running`);
     backendReady = true;
     return;
   }
 
-  const python = findPython();
   const dbPath = path.join(app.getPath('userData'), 'mssql_dashboard.db');
   const keyPath = path.join(app.getPath('userData'), 'key.secret');
-
-  log.info(`Starting backend: ${python} -m uvicorn main:app`);
-  log.info(`Backend path: ${backendPath}`);
-  log.info(`DB path: ${dbPath}`);
 
   const env = {
     ...process.env,
     DB_PATH: dbPath,
     KEY_FILE: keyPath,
-    PYTHONPATH: backendPath,
+    API_PORT: String(API_PORT),
     PYTHONUNBUFFERED: '1',
   };
 
-  pythonProcess = spawn(
-    python,
-    ['-m', 'uvicorn', 'main:app', '--host', '127.0.0.1', '--port', String(API_PORT), '--log-level', 'warning'],
-    {
-      cwd: backendPath,
-      env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      windowsHide: true,   // no console window on Windows
-    }
-  );
+  let command, args;
 
-  pythonProcess.stdout.on('data', (d) => log.info(`[backend] ${d.toString().trim()}`));
-  pythonProcess.stderr.on('data', (d) => log.warn(`[backend] ${d.toString().trim()}`));
+  // 1. Check for the compiled standalone executable first (Production)
+  const compiledExe = process.platform === 'win32' 
+    ? path.join(backendPath, 'dist', 'mssql_backend.exe')
+    : path.join(backendPath, 'dist', 'mssql_backend');
+
+  if (fs.existsSync(compiledExe)) {
+    log.info(`Found standalone backend: ${compiledExe}`);
+    command = compiledExe;
+    args = []; // Arguments are handled inside run_backend.py
+  } 
+  // 2. Fallback to raw Python script (Development)
+  else {
+    log.info('Standalone backend not found, falling back to Python script...');
+    command = findPython();
+    args = ['-m', 'uvicorn', 'main:app', '--host', '127.0.0.1', '--port', String(API_PORT), '--log-level', 'warning'];
+    env.PYTHONPATH = backendPath;
+  }
+
+  log.info(`Starting backend: ${command} ${args.join(' ')}`);
+  log.info(`DB path: ${dbPath}`);
+
+  pythonProcess = spawn(command, args, {
+    cwd: backendPath,
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+  });
+
+  pythonProcess.stdout?.on('data', (d) => log.info(`[backend] ${d.toString().trim()}`));
+  pythonProcess.stderr?.on('data', (d) => log.warn(`[backend] ${d.toString().trim()}`));
 
   pythonProcess.on('exit', (code) => {
     log.warn(`Backend exited with code ${code}`);
@@ -139,10 +159,7 @@ async function startBackend() {
 
   pythonProcess.on('error', (err) => {
     log.error(`Failed to start backend: ${err.message}`);
-    dialog.showErrorBox(
-      'Backend Start Failed',
-      `Could not start the Python backend.\n\nError: ${err.message}\n\nMake sure Python 3.11+ is installed:\nhttps://python.org\n\nAnd the ODBC Driver 17 or 18 for SQL Server:\nhttps://aka.ms/odbc18`
-    );
+    dialog.showErrorBox('Backend Start Failed', `Could not start the backend.\n\nError: ${err.message}`);
   });
 
   try {
@@ -195,21 +212,29 @@ function createWindow() {
     show: false,
   });
 
-  // Load the app
-  const startUrl = `http://127.0.0.1:${API_PORT}`;
-  log.info(`Loading: ${startUrl}`);
-
   // Show a loading screen while backend starts
   mainWindow.loadFile(path.join(__dirname, 'loading.html'));
   mainWindow.once('ready-to-show', () => {
     if (!store.get('startMinimized')) mainWindow.show();
   });
 
-  // Navigate to app once backend is ready
+  // Load the React Frontend
   const tryLoad = async () => {
     try {
       if (backendReady) {
-        mainWindow.loadURL(startUrl);
+        // Point Electron directly to your built React index.html
+        const indexPath = isPackaged 
+  	  ? path.join(frontendPath, 'index.html') 
+  	  : path.join(frontendPath, 'dist', 'index.html');
+        log.info(`Loading frontend from: ${indexPath}`);
+        
+        if (fs.existsSync(indexPath)) {
+            mainWindow.loadFile(indexPath);
+        } else {
+            // Fallback for development if Vite is running
+            log.warn(`Could not find ${indexPath}, falling back to localhost:5173`);
+            mainWindow.loadURL('http://localhost:5173');
+        }
       } else {
         setTimeout(tryLoad, 300);
       }

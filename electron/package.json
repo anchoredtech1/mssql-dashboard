@@ -38,7 +38,7 @@
       {
         "from": "../backend",
         "to": "backend",
-        "filter": ["**/*", "!__pycache__", "!*.pyc", "!*.db", "!key.secret"]
+        "filter": ["**/*", "!__pycache__", "!*.pyc", "!*.db", "!key.secret", "dist/mssql_backend.exe"]
       },
       {
         "from": "../frontend/dist",
@@ -60,12 +60,9 @@
       "allowElevation": true,
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
-      "installerHeader": "assets/installer-header.bmp",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "MSSQL Dashboard",
-      "include": "scripts/installer.nsh",
-      "installerSidebar": "assets/installer-sidebar.bmp"
+      "shortcutName": "MSSQL Dashboard"
     },
     "mac": {
       "target": "dmg",

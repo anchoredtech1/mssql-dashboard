@@ -60,22 +60,20 @@ function ImportServerButton({ onImportSuccess, style }) {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to import servers');
-      }
-
       const data = await response.json();
-      alert(data.message); 
-      
-      if (onImportSuccess) {
-        onImportSuccess();
+
+      if (!response.ok) {
+        alert(`Import failed: ${data.detail || 'Unknown error'}`);
+      } else {
+        alert(data.message);
+        if (onImportSuccess) onImportSuccess();
       }
     } catch (error) {
       console.error('Error importing file:', error);
-      alert('There was an error importing the file. Please check the format.');
+      alert('Network error — make sure the backend is running.');
     } finally {
       setIsUploading(false);
-      event.target.value = null; 
+      event.target.value = null;
     }
   };
 
@@ -425,7 +423,7 @@ function AddServerModal({ onClose, onSaved }) {
   const lbl = { fontSize:10, fontFamily:"'DM Mono', monospace", color:"#7a8aac", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4, display:"block" };
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16, WebkitAppRegion: "no-drag" }}>
       <div style={{ background:"#0d1428", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, padding:28, width:"100%", maxWidth:520, maxHeight:"90vh", overflowY:"auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
           <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:18 }}>Add Server</span>
@@ -804,8 +802,13 @@ export default function App() {
   const loadServers = useCallback(async () => {
     try {
       const s = await api.servers();
-      setServers(s);
-      if (s.length > 0 && !selected) setSelected(s[0]);
+      // Safety check: Only update the UI if the backend actually sent a valid list!
+      if (Array.isArray(s)) {
+        setServers(s);
+        if (s.length > 0 && !selected) setSelected(s[0]);
+      } else {
+        console.error("Backend sent invalid data:", s);
+      }
     } catch(e) { console.error("Failed to load servers:", e); }
   }, [selected]);
 

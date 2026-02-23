@@ -21,7 +21,7 @@ from database import get_db, MonitoredServer, AuthType, ServerRole
 from crypto import encrypt, decrypt
 from connections.manager import pool
 
-router = APIRouter(prefix="/api/servers", tags=["servers"])
+router = APIRouter(prefix="/servers", tags=["servers"])
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -115,17 +115,46 @@ def create_server(payload: ServerCreate, db: Session = Depends(get_db)):
 @router.post("/import", status_code=status.HTTP_200_OK)
 async def import_servers(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Bulk imports servers from an SSMS .regsrvr XML file."""
+    import re
     content = await file.read()
+    
+    # Try multiple encodings
+    text = None
+    for encoding in ('utf-16', 'utf-8-sig', 'utf-8', 'latin-1'):
+        try:
+            text = content.decode(encoding)
+            break
+        except (UnicodeDecodeError, LookupError):
+            continue
+
+    if text is None:
+        raise HTTPException(status_code=400, detail="Could not decode file. Try saving from SSMS as UTF-8.")
+
+    # Strip BOM and everything before first '<'
+    first_bracket = text.find('<')
+    if first_bracket == -1:
+        raise HTTPException(status_code=400, detail="No XML content found in file.")
+    text = text[first_bracket:]
+
+    # Strip XML declaration (handles encoding="utf-16" etc.)
+    text = re.sub(r'<\?xml[^>]+\?>', '', text, flags=re.IGNORECASE).strip()
+
+    # Strip again after regex in case of leftover whitespace/BOM
+    first_bracket = text.find('<')
+    if first_bracket != -1:
+        text = text[first_bracket:]
+
     try:
-        root = ET.fromstring(content)
-    except ET.ParseError:
-        raise HTTPException(status_code=400, detail="Invalid XML file format.")
+        root = ET.fromstring(text)
+    except ET.ParseError as e:
+        print(f"[import] XML Parse Error: {e}")
+        print(f"[import] First 500 chars of text: {text[:500]!r}")
+        raise HTTPException(status_code=400, detail=f"XML parse error: {str(e)}")
 
     imported_count = 0
 
-    # SSMS files contain namespaces, so we search by matching the end of the tag name
     for elem in root.iter():
-        tag = elem.tag.split('}')[-1]  # Strip out the XML namespace
+        tag = elem.tag.split('}')[-1]
         if tag == "RegisteredServer":
             display_name = "Imported Server"
             host = "localhost"
@@ -134,33 +163,32 @@ async def import_servers(file: UploadFile = File(...), db: Session = Depends(get
             auth_type = AuthType.windows
             username = None
 
-            # Look through the properties of this specific server
             for child in elem.iter():
                 ctag = child.tag.split('}')[-1]
                 if ctag == "Name" and child.text:
-                    display_name = child.text
+                    display_name = child.text.strip()
                 elif ctag == "ServerName" and child.text:
-                    raw_host = child.text
-                    # Check for instance name (Host\Instance)
+                    raw_host = child.text.strip()
                     if "\\" in raw_host:
                         host, instance_name = raw_host.split("\\", 1)
-                    # Check for custom port (Host,1433)
                     elif "," in raw_host:
                         host, port_str = raw_host.split(",", 1)
                         try:
-                            port = int(port_str)
+                            port = int(port_str.strip())
                         except ValueError:
                             pass
                     else:
                         host = raw_host
                 elif ctag == "LoginSecure" and child.text:
-                    # 'false' or '0' means SQL Authentication
-                    if child.text.lower() in ['false', '0']:
+                    if child.text.strip().lower() in ['false', '0']:
                         auth_type = AuthType.sql
                 elif ctag == "Login" and child.text:
-                    username = child.text
+                    username = child.text.strip()
 
-            # Save to database
+            # Skip entries with no real host
+            if not host or host == "localhost":
+                continue
+
             server = MonitoredServer(
                 display_name=display_name,
                 host=host,
@@ -177,8 +205,15 @@ async def import_servers(file: UploadFile = File(...), db: Session = Depends(get
             db.add(server)
             imported_count += 1
 
+    if imported_count == 0:
+        # Didn't crash but found nothing — likely wrong file structure
+        raise HTTPException(
+            status_code=400, 
+            detail="No RegisteredServer entries found. Make sure you exported a Server Registration file from SSMS (File > Export > Registered Servers)."
+        )
+
     db.commit()
-    return {"message": f"Successfully imported {imported_count} servers."}
+    return {"message": f"Successfully imported {imported_count} server(s)."}
 
 
 @router.get("/", response_model=list[ServerResponse])
