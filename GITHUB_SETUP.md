@@ -1,187 +1,118 @@
 # GitHub Setup Guide — MSSQL Dashboard
 
-Step-by-step instructions to publish the project on GitHub so people can download it from your website.
+Step-by-step reference for managing the repository, building releases, and deploying updates.
+
+> **Already set up?** Jump to [Releasing a New Version](#releasing-a-new-version).
 
 ---
 
-## Step 1: Create the GitHub Repository
+## Repository
 
-1. Go to **https://github.com** and sign in to your account (or create one)
-2. Click the **+** icon (top-right) → **New repository**
-3. Fill in:
-   - **Repository name:** `mssql-dashboard`
-   - **Description:** `Free self-hosted SQL Server monitoring dashboard — no cloud required`
-   - **Visibility:** ✅ Public (so anyone can download without an account)
-   - **Initialize:** Leave ALL checkboxes unchecked (we're pushing existing code)
-4. Click **Create repository**
-
-GitHub will show you a page with push instructions — keep it open.
+| | |
+|---|---|
+| **URL** | https://github.com/anchoredtech1/mssql-dashboard |
+| **Visibility** | Public |
+| **Current version** | v1.1.0 |
+| **License** | MIT |
 
 ---
 
-## Step 2: Push the Code to GitHub
+## How Releases Work
 
-Open a terminal/command prompt, navigate to the project folder, and run:
+Pushing a version tag triggers two GitHub Actions workflows automatically:
 
-```bash
-cd path\to\mssql-dashboard
+```
+git tag v1.1.0 && git push origin v1.1.0
+         ↓
+┌─────────────────────────────────────────────────────────┐
+│  build.yml                                              │
+│  1. Build React frontend  (ubuntu-latest)               │
+│  2. Build Windows .exe installer  (windows-latest)      │
+│  3. Create GitHub Release with .exe attached            │
+└─────────────────────────────────────────────────────────┘
+         ↓
+Release page:
+https://github.com/anchoredtech1/mssql-dashboard/releases
 
-# Initialize git (first time only)
-git init
-git branch -M main
+Download links (always point to latest):
+  .exe installer  → /releases/latest/download/MSSQL-Dashboard-Setup-*.exe
+  Portable .exe   → /releases/latest/download/MSSQL-Dashboard-*.exe
+```
 
-# Connect to your GitHub repo (replace YOUR_USERNAME)
-git remote add origin https://github.com/YOUR_USERNAME/mssql-dashboard.git
+---
 
-# Stage all files
+## Releasing a New Version
+
+This is the day-to-day workflow once everything is set up.
+
+### 1 — Stage and Commit Changes
+
+```powershell
+cd C:\Users\lksan\Downloads\dashboard
+
 git add .
-
-# First commit
-git commit -m "Initial release: backend foundation v1.0.0"
-
-# Push to GitHub
-git push -u origin main
-```
-
-> **Note:** If GitHub asks for credentials, use your GitHub username and a **Personal Access Token** (not your password). Create one at: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → New token → check `repo` scope.
-
----
-
-## Step 3: Create Your First Release (v1.0.0)
-
-This is what generates the downloadable ZIP file on GitHub.
-
-### Option A — Using the GitHub Website (Easiest)
-
-1. Go to your repo page: `https://github.com/YOUR_USERNAME/mssql-dashboard`
-2. Click **Releases** (right sidebar) → **Create a new release**
-3. Click **Choose a tag** → type `v1.0.0` → click **+ Create new tag: v1.0.0**
-4. **Release title:** `MSSQL Dashboard v1.0.0`
-5. In the description box, paste this:
-
-```
-## What's in this release
-- Full backend API (FastAPI + Python)
-- SQL Auth, Windows Auth, and TLS/Certificate Auth support
-- AG, FCI, and Log Shipping monitoring queries
-- SQLite local storage with Fernet encrypted credentials
-- Background polling scheduler with configurable intervals
-- Alert rules and event history
-- One-click install.bat for Windows
-
-## Requirements
-- Python 3.11+ → https://python.org
-- ODBC Driver 17 or 18 → https://aka.ms/odbc18
-
-See the README for full installation instructions.
-```
-
-6. Scroll down to **Assets** → Click **Attach binaries** → Upload your ZIP file
-   - Or let the GitHub Actions workflow (already included) build it automatically when you push the tag
-7. Click **Publish release**
-
-### Option B — Using a Git Tag (Triggers Automatic ZIP Build)
-
-Once you've pushed the code, just push a version tag:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The GitHub Actions workflow in `.github/workflows/release.yml` will automatically:
-- Build the clean ZIP (no `.git`, no secrets, no `*.db` files)
-- Create the GitHub Release
-- Attach the ZIP as a downloadable asset
-
-Check the progress at: `https://github.com/YOUR_USERNAME/mssql-dashboard/actions`
-
----
-
-## Step 4: Get Your Download Link
-
-After the release is published, your permanent download link will be:
-
-```
-https://github.com/YOUR_USERNAME/mssql-dashboard/releases/latest/download/mssql-dashboard-v1.0.0.zip
-```
-
-The `/releases/latest/download/` path always points to the **most recent** release, so when you publish v1.1.0 later, the link on your website automatically serves the new version without any changes.
-
----
-
-## Step 5: Update Your Website Download Page
-
-In the `mssql-dashboard-page.html` file, find these two buttons and update the links:
-
-```html
-<!-- Change this: -->
-<a href="/downloads/mssql-dashboard-v1.0.0.zip" ...>
-
-<!-- To this: -->
-<a href="https://github.com/YOUR_USERNAME/mssql-dashboard/releases/latest/download/mssql-dashboard-v1.0.0.zip" ...>
-
-
-<!-- And this GitHub link: -->
-<a href="https://github.com/anchoredtechsolutions/mssql-dashboard" ...>
-
-<!-- To this (same URL, just make sure the username is right): -->
-<a href="https://github.com/YOUR_USERNAME/mssql-dashboard" ...>
-```
-
----
-
-## Step 6: Releasing Future Versions
-
-Every time you add new features (like the v1.1.0 React frontend), releasing is just two commands:
-
-```bash
-# Stage and commit your changes
-git add .
-git commit -m "v1.1.0: Add React frontend dashboard"
-
-# Push the code
+git commit -m "Description of what changed"
 git push origin main
-
-# Tag the new version — this triggers the auto-release workflow
-git tag v1.1.0
-git push origin v1.1.0
 ```
 
-GitHub Actions builds the ZIP and publishes the release automatically. Your website download link stays the same.
+### 2 — Build the Frontend
+
+Before tagging, make sure the React frontend is built:
+
+```powershell
+cd frontend
+npm install
+npm run build        # outputs to frontend/dist/
+cd ..
+```
+
+### 3 — Tag the Release
+
+```powershell
+# Replace X.X.X with the new version number
+git tag vX.X.X
+git push origin vX.X.X
+```
+
+### 4 — Watch the Build
+
+Go to **https://github.com/anchoredtech1/mssql-dashboard/actions**
+
+You'll see two workflow runs:
+- **CI** — validates Python imports and tests (~20s)
+- **Build Desktop App** — builds the .exe installer (~5-8 min)
+
+Both should show ✅ green. If either fails, click on it to see the error log.
+
+### 5 — Verify the Release
+
+Go to **https://github.com/anchoredtech1/mssql-dashboard/releases**
+
+You should see the new version with two `.exe` files attached:
+- `MSSQL-Dashboard-Setup-X.X.X.exe` — full installer
+- `MSSQL-Dashboard-X.X.X.exe` — portable version
 
 ---
 
-## Repository Settings to Configure
+## Version History
 
-Once the repo is created, set these up:
-
-### Topics (for discoverability)
-Go to repo page → gear icon next to About → add topics:
-```
-sql-server  mssql  database-monitoring  dba  fastapi  python  free  self-hosted
-```
-
-### About Section
-- **Website:** `https://anchoredtechsolutions.com/mssql-dashboard`
-- **Description:** `Free self-hosted SQL Server monitoring dashboard`
-- Check ✅ **Releases**
-- Check ✅ **Packages**
-
-### Branch Protection (Optional but recommended)
-Go to Settings → Branches → Add rule → Branch name: `main` → Check "Require pull request reviews before merging"
+| Version | What Changed |
+|---|---|
+| **v1.1.0** | Electron desktop app, React frontend, system tray, auto-update |
+| **v1.0.0** | Initial release — FastAPI backend, SQLite storage, encrypted credentials |
 
 ---
 
-## File Structure That Will Be on GitHub
+## Full Folder Structure on GitHub
 
 ```
 mssql-dashboard/
 ├── .github/
 │   └── workflows/
-│       ├── release.yml     ← Auto-builds ZIP on version tags
-│       └── ci.yml          ← Runs tests on every push
-├── backend/
+│       ├── build.yml           ← Builds .exe installer on version tags
+│       └── ci.yml              ← Validates Python + runs tests on push/PR
+│
+├── backend/                    ← Python FastAPI backend
 │   ├── main.py
 │   ├── database.py
 │   ├── crypto.py
@@ -199,38 +130,130 @@ mssql-dashboard/
 │       ├── metrics.py
 │       ├── clusters.py
 │       └── alerts.py
-├── installer/
+│
+├── frontend/                   ← React frontend (Vite)
+│   ├── src/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   ├── vite.config.js
+│   └── index.html
+│
+├── electron/                   ← Desktop app wrapper (Electron)
+│   ├── src/
+│   │   ├── main.js             ← Main process: window, tray, Python spawn
+│   │   ├── preload.js          ← Secure IPC bridge
+│   │   └── loading.html        ← Startup screen
+│   ├── assets/                 ← icon.ico, icon.png, tray-icon.png
+│   ├── scripts/
+│   │   └── installer.nsh       ← NSIS installer customization
+│   └── package.json            ← electron-builder config
+│
+├── installer/                  ← Manual install scripts
 │   ├── requirements.txt
 │   ├── install.bat
 │   └── install.sh
-├── .gitignore              ← Keeps secrets/DB files out of GitHub
-├── README.md               ← What people see on the GitHub page
-└── GITHUB_SETUP.md         ← This file
+│
+├── .gitignore
+├── README.md
+├── GITHUB_SETUP.md             ← This file
+└── DESKTOP_APP_SETUP.md        ← Electron build instructions
 ```
 
 ---
 
 ## What the .gitignore Protects
 
-These files are **automatically excluded** from GitHub — they will never be committed:
+These files are **never committed to GitHub**:
 
-| File | Why Excluded |
+| File / Pattern | Why Excluded |
 |---|---|
-| `key.secret` | Encryption key — never share this |
+| `key.secret` | Fernet encryption key — never share this |
+| `*.db`, `*.sqlite` | Local SQLite database with your server configs |
 | `*.pem`, `*.cer` | TLS certificates |
-| `*.db`, `*.sqlite` | Local databases with your server list |
-| `.env` | Environment variables |
 | `certs/` | Certificate folder |
-| `__pycache__/` | Python compiled files |
+| `.env` | Environment variables |
+| `__pycache__/` | Python bytecode |
+| `node_modules/` | npm packages (restored via `npm install`) |
+| `frontend/dist/` | Built frontend (rebuilt by GitHub Actions) |
+| `electron/dist/` | Built installers (produced by GitHub Actions) |
+
+---
+
+## Personal Access Token
+
+GitHub requires a token (not your password) for command-line pushes.
+
+**Create / Renew a token:**
+1. Go to https://github.com/settings/tokens
+2. Click **Tokens (classic)** → **Generate new token (classic)**
+3. Set expiration (90 days recommended)
+4. Check these scopes: ✅ `repo` &nbsp; ✅ `workflow`
+5. Click **Generate token** — copy it immediately
+
+**Use when prompted during `git push`:**
+- Username: `anchoredtech1`
+- Password: *(paste the token)*
+
+**Store the token so you don't get prompted every time:**
+```powershell
+git config --global credential.helper manager
+```
+Windows Credential Manager will save it after the first use.
+
+---
+
+## GitHub Actions — Workflow Details
+
+### `build.yml` — Desktop App Builder
+Triggers on: version tags matching `v*.*.*`
+
+| Step | Runs On | What It Does |
+|---|---|---|
+| Build frontend | ubuntu-latest | `npm ci && npm run build` in `frontend/` |
+| Build Windows installer | windows-latest | `npm ci && npm run build` in `electron/` |
+| Create release | ubuntu-latest | Creates GitHub Release, attaches `.exe` files |
+
+### `ci.yml` — Continuous Integration
+Triggers on: every push to `main`/`develop` and all pull requests
+
+| Step | What It Tests |
+|---|---|
+| Python imports | `database`, `crypto`, `connections.builder` all import cleanly |
+| Encryption | Fernet encrypt/decrypt round-trip works |
+| Connection builder | All 3 auth types (SQL, Windows, TLS) build valid strings |
+| FastAPI startup | App loads without errors |
+
+---
+
+## Repository Settings
+
+### Topics (for GitHub discoverability)
+Repo page → gear icon next to **About** → add:
+```
+sql-server  mssql  database-monitoring  dba  fastapi  python  electron  self-hosted  free
+```
+
+### About Section
+- **Website:** `https://anchoredtechsolutions.com/mssql-dashboard`
+- **Description:** `Free self-hosted SQL Server monitoring dashboard — desktop app included`
+- Check ✅ **Releases**
+
+### Branch Protection (Recommended)
+Settings → Branches → Add rule → Branch: `main`
+- ✅ Require status checks to pass before merging
+- Select: **CI** workflow as required check
 
 ---
 
 ## Quick Reference
 
-| Action | Command |
+| Task | Command |
 |---|---|
-| First push | `git add . && git commit -m "Initial" && git push -u origin main` |
 | Push changes | `git add . && git commit -m "message" && git push` |
-| Create release | `git tag v1.0.0 && git push origin v1.0.0` |
-| Check actions | `https://github.com/YOUR_USERNAME/mssql-dashboard/actions` |
-| View releases | `https://github.com/YOUR_USERNAME/mssql-dashboard/releases` |
+| Create release | `git tag v1.1.0 && git push origin v1.1.0` |
+| Delete a tag (redo) | `git tag -d v1.1.0 && git push origin --delete v1.1.0` |
+| Check build status | https://github.com/anchoredtech1/mssql-dashboard/actions |
+| View releases | https://github.com/anchoredtech1/mssql-dashboard/releases |
+| Latest .exe link | `/releases/latest/download/MSSQL-Dashboard-Setup-*.exe` |
+| Swagger API docs | http://localhost:8080/docs *(when backend is running)* |
