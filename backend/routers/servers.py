@@ -19,7 +19,7 @@ from database import get_db, MonitoredServer, AuthType, ServerRole
 from crypto import encrypt, decrypt
 from connections.manager import pool
 
-router = APIRouter(prefix="/servers", tags=["servers"])
+router = APIRouter(prefix="/api/servers", tags=["servers"])
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────

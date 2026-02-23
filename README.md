@@ -1,5 +1,30 @@
 # MSSQL Dashboard
 
+## 🚀 How to Run the Dashboard
+
+This project uses a FastAPI backend and a React (Vite) frontend. You will need both running to view the dashboard.
+
+### 1. Build the Frontend
+First, install the Node dependencies and compile the React code:
+\`\`\`bash
+cd frontend
+npm install
+npm run build
+\`\`\`
+*Requires [Node.js](https://nodejs.org).*
+
+### 2. Start the Backend
+Open a new terminal, navigate to the backend folder, install the Python requirements, and start the server:
+\`\`\`bash
+cd backend
+python -m pip install -r ../installer/requirements.txt
+python -m uvicorn main:app --port 8080
+\`\`\`
+*Requires Python 3.8+.*
+
+### 3. View the Dashboard
+Once the server says "Application startup complete", open your web browser and navigate to:
+**http://localhost:8080**
 <div align="center">
 
 ![MSSQL Dashboard](https://img.shields.io/badge/MSSQL-Dashboard-1a6cf5?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)

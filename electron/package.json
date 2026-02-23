@@ -1,0 +1,86 @@
+{
+  "name": "mssql-dashboard",
+  "version": "1.1.0",
+  "description": "Free self-hosted SQL Server monitoring dashboard by Anchored Tech Solutions",
+  "main": "src/main.js",
+  "author": "Anchored Tech Solutions <contact@anchoredtechsolutions.com>",
+  "homepage": "https://anchoredtechsolutions.com",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win",
+    "build:all": "electron-builder --win --mac --linux",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "electron-log": "^5.1.2",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.1.8"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.anchoredtechsolutions.mssql-dashboard",
+    "productName": "MSSQL Dashboard",
+    "copyright": "Copyright © 2025 Anchored Tech Solutions, LLC",
+    "icon": "assets/icon.ico",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "!assets/icon.icns",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": ["**/*", "!__pycache__", "!*.pyc", "!*.db", "!key.secret"]
+      },
+      {
+        "from": "../frontend/dist",
+        "to": "frontend",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeader": "assets/installer-header.bmp",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MSSQL Dashboard",
+      "include": "scripts/installer.nsh",
+      "installerSidebar": "assets/installer-sidebar.bmp"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "assets/icon.png",
+      "category": "Development"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "anchoredtech1",
+      "repo": "mssql-dashboard"
+    }
+  }
+}

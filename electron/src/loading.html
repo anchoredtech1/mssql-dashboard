@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MSSQL Dashboard — Starting</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; }
+
+  body {
+    background: #0a0f1e;
+    color: #f0f4ff;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    /* drag the window from anywhere on loading screen */
+    -webkit-app-region: drag;
+    user-select: none;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(26,108,245,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,108,245,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo-icon {
+    font-size: 52px;
+    animation: float 3s ease infinite;
+  }
+
+  .logo-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-title span {
+    background: linear-gradient(135deg, #1a6cf5, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-sub {
+    font-size: 12px;
+    color: #7a8aac;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.1em;
+  }
+
+  .status {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* Animated loading bar */
+  .bar-track {
+    width: 240px;
+    height: 3px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, #1a6cf5, #00d4ff);
+    border-radius: 2px;
+    animation: slide 1.4s ease infinite;
+  }
+
+  .status-text {
+    font-size: 11px;
+    color: #7a8aac;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.05em;
+    animation: blink 1.5s ease infinite;
+  }
+
+  .steps {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 260px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: #7a8aac;
+    font-family: 'Courier New', monospace;
+    opacity: 0;
+    animation: fadeIn 0.4s ease forwards;
+  }
+  .step:nth-child(1) { animation-delay: 0.2s; }
+  .step:nth-child(2) { animation-delay: 0.8s; }
+  .step:nth-child(3) { animation-delay: 1.4s; }
+  .step:nth-child(4) { animation-delay: 2.0s; }
+
+  .step-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #1a6cf5;
+    flex-shrink: 0;
+    animation: pulse 2s ease infinite;
+  }
+
+  .footer {
+    position: fixed;
+    bottom: 16px;
+    font-size: 10px;
+    color: rgba(122,138,172,0.5);
+    font-family: 'Courier New', monospace;
+    z-index: 1;
+  }
+
+  @keyframes slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(700%); }
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(1.4); }
+  }
+</style>
+</head>
+<body>
+
+<div class="logo">
+  <div class="logo-icon">🗄️</div>
+  <div class="logo-title">MSSQL <span>Dashboard</span></div>
+  <div class="logo-sub">BY ANCHORED TECH SOLUTIONS</div>
+</div>
+
+<div class="status">
+  <div class="bar-track">
+    <div class="bar-fill"></div>
+  </div>
+  <div class="status-text">Starting backend services...</div>
+</div>
+
+<div class="steps">
+  <div class="step"><span class="step-dot"></span>Initializing Python environment</div>
+  <div class="step"><span class="step-dot"></span>Starting FastAPI server</div>
+  <div class="step"><span class="step-dot"></span>Opening SQLite database</div>
+  <div class="step"><span class="step-dot"></span>Loading dashboard...</div>
+</div>
+
+<div class="footer">© 2025 Anchored Tech Solutions, LLC · v1.1.0</div>
+
+</body>
+</html>
