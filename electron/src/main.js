@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, Tray, Menu, shell, ipcMain, dialog, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, shell, ipcMain, dialog, Notification, protocol, net: electronNet } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const Store = require('electron-store');
@@ -8,6 +8,7 @@ const path = require('path');
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const net = require('net');
+const { pathToFileURL } = require('url');
 
 // ── LOGGING ───────────────────────────────────────────────────────────────────
 log.transports.file.level = 'info';
@@ -218,12 +219,12 @@ function createWindow() {
     if (!store.get('startMinimized')) mainWindow.show();
   });
 
-  // Load the React Frontend via the backend (avoids file:// ES module issues)
+  // Load the React Frontend via custom app:// protocol
   const tryLoad = async () => {
     try {
       if (backendReady) {
-        log.info(`Loading frontend from backend at http://localhost:${API_PORT}`);
-        mainWindow.loadURL(`http://localhost:${API_PORT}`);
+        log.info('Loading frontend via app:// protocol');
+        mainWindow.loadURL('app://dashboard/index.html');
       } else {
         setTimeout(tryLoad, 300);
       }
@@ -417,8 +418,32 @@ function setupAutoUpdater() {
   setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 4 * 60 * 60 * 1000);
 }
 
+// ── CUSTOM PROTOCOL (serves local files without file:// CORS issues) ────────
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } }
+]);
+
 // ── APP LIFECYCLE ─────────────────────────────────────────────────────────────
 app.whenReady().then(async () => {
+  // Register 'app://' protocol to serve frontend files
+  protocol.handle('app', (request) => {
+    const url = new URL(request.url);
+    let filePath = url.pathname;
+    // Default to index.html for root
+    if (filePath === '/' || filePath === '') filePath = '/index.html';
+
+    const distDir = isPackaged
+      ? frontendPath
+      : path.join(frontendPath, 'dist');
+    const fullPath = path.join(distDir, filePath);
+
+    // Security: prevent path traversal
+    if (!fullPath.startsWith(distDir)) {
+      return new Response('Forbidden', { status: 403 });
+    }
+
+    return electronNet.fetch(pathToFileURL(fullPath).toString());
+  });
   log.info(`MSSQL Dashboard ${app.getVersion()} starting...`);
   log.info(`Platform: ${process.platform} ${process.arch}`);
   log.info(`Backend Path: ${backendPath}`);
