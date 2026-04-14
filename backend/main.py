@@ -67,10 +67,15 @@ app.include_router(alerts.router,   prefix="/api")
 
 
 # ── Static frontend (served from /frontend/dist after build) ─────────────────
-_STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+_STATIC_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
+)
+logger.info(f"Static dir resolved to: {_STATIC_DIR} (exists={os.path.isdir(_STATIC_DIR)})")
 if os.path.isdir(_STATIC_DIR):
     app.mount("/", StaticFiles(directory=_STATIC_DIR, html=True), name="static")
     logger.info(f"Serving frontend from {_STATIC_DIR}")
+else:
+    logger.warning(f"Frontend dist not found at {_STATIC_DIR} — skipping static mount")
 
 
 # ── Health check ─────────────────────────────────────────────────────────────

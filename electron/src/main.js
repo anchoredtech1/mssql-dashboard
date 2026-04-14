@@ -218,23 +218,12 @@ function createWindow() {
     if (!store.get('startMinimized')) mainWindow.show();
   });
 
-  // Load the React Frontend
+  // Load the React Frontend via the backend (avoids file:// ES module issues)
   const tryLoad = async () => {
     try {
       if (backendReady) {
-        // Point Electron directly to your built React index.html
-        const indexPath = isPackaged 
-  	  ? path.join(frontendPath, 'index.html') 
-  	  : path.join(frontendPath, 'dist', 'index.html');
-        log.info(`Loading frontend from: ${indexPath}`);
-        
-        if (fs.existsSync(indexPath)) {
-            mainWindow.loadFile(indexPath);
-        } else {
-            // Fallback for development if Vite is running
-            log.warn(`Could not find ${indexPath}, falling back to localhost:5173`);
-            mainWindow.loadURL('http://localhost:5173');
-        }
+        log.info(`Loading frontend from backend at http://localhost:${API_PORT}`);
+        mainWindow.loadURL(`http://localhost:${API_PORT}`);
       } else {
         setTimeout(tryLoad, 300);
       }
