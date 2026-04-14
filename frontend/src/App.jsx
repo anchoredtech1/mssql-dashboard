@@ -799,18 +799,33 @@ export default function App() {
   const [unacked, setUnacked] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const loadServers = useCallback(async () => {
+const loadServers = useCallback(async () => {
     try {
       const s = await api.servers();
-      // Safety check: Only update the UI if the backend actually sent a valid list!
+      
       if (Array.isArray(s)) {
         setServers(s);
-        if (s.length > 0 && !selected) setSelected(s[0]);
+        
+        // The Fix: By using `prevSelected` inside the setter, 
+        // React always checks the LIVE state, ignoring the stale background timer memory!
+        setSelected(prevSelected => {
+          if (prevSelected) {
+            const updatedSelected = s.find(server => server.id === prevSelected.id);
+            return updatedSelected || prevSelected;
+          } 
+          // If nothing is selected yet, select the first one
+          if (s.length > 0) {
+            return s[0];
+          }
+          return null;
+        });
       } else {
         console.error("Backend sent invalid data:", s);
       }
-    } catch(e) { console.error("Failed to load servers:", e); }
-  }, [selected]);
+    } catch(e) { 
+      console.error("Failed to load servers:", e); 
+    }
+  }, []); // <-- We also removed `selected` from this array so the timer doesn't reset. 
 
   useEffect(() => {
     loadServers();

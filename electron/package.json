@@ -19,13 +19,13 @@
     "electron-updater": "^6.1.8"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3"
+    "electron": "^41.2.0",
+    "electron-builder": "^26.8.1"
   },
   "build": {
     "appId": "com.anchoredtechsolutions.mssql-dashboard",
     "productName": "MSSQL Dashboard",
-    "copyright": "Copyright © 2025 Anchored Tech Solutions, LLC",
+    "copyright": "Copyright © 2026 Anchored Tech Solutions, LLC",
     "icon": "assets/icon.ico",
     "asar": true,
     "files": [
@@ -36,20 +36,28 @@
     ],
     "extraResources": [
       {
-        "from": "../backend",
-        "to": "backend",
-        "filter": ["**/*", "!__pycache__", "!*.pyc", "!*.db", "!key.secret", "dist/mssql_backend.exe"]
+        "from": "../backend/dist/mssql_backend",
+        "to": "backend/dist/mssql_backend"
       },
       {
         "from": "../frontend/dist",
-        "to": "frontend",
-        "filter": ["**/*"]
+        "to": "frontend"
       }
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "assets/icon.ico",
       "requestedExecutionLevel": "asInvoker"
@@ -70,7 +78,10 @@
       "category": "public.app-category.developer-tools"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "assets/icon.png",
       "category": "Development"
     },

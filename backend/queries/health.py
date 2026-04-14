@@ -150,8 +150,9 @@ def get_wait_stats(conn: pyodbc.Connection, top_n: int = 10) -> list:
     Returns the top N wait types by total wait time (since last clear/restart).
     Filters out benign background waits.
     """
-    sql = f"""
-    SELECT TOP {top_n}
+    top_n = max(1, min(int(top_n), 50))
+    sql = """
+    SELECT TOP (?)
         wait_type,
         waiting_tasks_count,
         wait_time_ms,
@@ -180,7 +181,7 @@ def get_wait_stats(conn: pyodbc.Connection, top_n: int = 10) -> list:
     """
     try:
         cursor = conn.cursor()
-        cursor.execute(sql)
+        cursor.execute(sql, (top_n,))
         cols = [c[0] for c in cursor.description]
         return [dict(zip(cols, row)) for row in cursor.fetchall()]
     except Exception as exc:

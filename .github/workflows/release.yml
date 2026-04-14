@@ -6,17 +6,18 @@ on:
     tags:
       - 'v*.*.*'
 
-permissions:
-  contents: write   # needed to create GitHub Releases
+permissions: {}
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create GitHub Releases
 
     steps:
       # 1. Check out the full repo
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       # 2. Get the version number from the tag (e.g. v1.0.0 → 1.0.0)
       - name: Get version from tag
@@ -45,7 +46,7 @@ jobs:
             --exclude='frontend/dist' \
             --exclude='release_build' \
             . release_build/mssql-dashboard/
-          
+
           cd release_build
           zip -r ../mssql-dashboard-v${{ steps.version.outputs.VERSION }}.zip mssql-dashboard/
           cd ..
@@ -54,7 +55,7 @@ jobs:
 
       # 4. Create the GitHub Release and upload the ZIP
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           name: "MSSQL Dashboard v${{ steps.version.outputs.VERSION }}"
           tag_name: ${{ github.ref_name }}

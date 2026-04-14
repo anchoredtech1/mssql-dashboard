@@ -74,7 +74,7 @@ function isPortFree(port) {
   });
 }
 
-function waitForPort(port, retries = 40, delay = 500) {
+function waitForPort(port, retries = 120, delay = 500) {
   return new Promise((resolve, reject) => {
     let attempts = 0;
     const check = () => {
@@ -120,8 +120,8 @@ async function startBackend() {
 
   // 1. Check for the compiled standalone executable first (Production)
   const compiledExe = process.platform === 'win32' 
-    ? path.join(backendPath, 'dist', 'mssql_backend.exe')
-    : path.join(backendPath, 'dist', 'mssql_backend');
+    ? path.join(backendPath, 'dist', 'mssql_backend', 'mssql_backend.exe')
+    : path.join(backendPath, 'dist', 'mssql_backend', 'mssql_backend');
 
   if (fs.existsSync(compiledExe)) {
     log.info(`Found standalone backend: ${compiledExe}`);
